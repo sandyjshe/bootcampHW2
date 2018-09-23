@@ -1,0 +1,121 @@
+Sub StockData()
+    ' loop through all the sheets
+    
+Dim WS As Worksheet
+
+    For Each WS In ActiveWorkbook.Worksheets
+    WS.Activate
+        
+        Dim openPrice As Double
+        Dim closePrice As Double
+        Dim yearlyChange As Double
+        Dim percentChange As Double
+        Dim tickerName As String
+        Dim volume As Double
+        Dim row As Double
+        Dim tickerColumn As Integer
+        Dim openColumn As Integer
+        Dim tickerSumColumn As Integer
+        Dim closeColumn As Integer
+        Dim yearlyChangeColumn As Integer
+        Dim percChangeColumn As Integer
+        Dim volColumn  As Integer
+        Dim totalVolColumn As Integer
+        Dim i As Long
+        
+        row = 2
+        volume = 0
+        tickerColumn = 1
+        openColumn = 3
+        tickerSumColumn = 9
+        closeColumn = 6
+        yearlyChangeColumn = 10
+        percChangeColumn = 11
+        volColumn = 7
+        totalVolColumn = 12
+        openPrice = Cells(2, openColumn).Value
+        lastRow = WS.Cells(Rows.Count, 1).End(xlUp).row
+
+        ' add Heading
+        Cells(1, 9).Value = "Ticker"
+        Cells(1, 10).Value = "Yearly Change"
+        Cells(1, 11).Value = "Percent Change"
+        Cells(1, 12).Value = "Total Stock Volume"
+        Cells(2, 15).Value = "Greatest % Increase"
+        Cells(3, 15).Value = "Greatest % Decrease"
+        Cells(4, 15).Value = "Greatest Total Volume"
+        Cells(1, 16).Value = "Ticker"
+        Cells(1, 17).Value = "Value"
+        
+        
+        
+         ' loop through all rows
+        For i = 2 To lastRow
+         ' check ticker symbol
+            If Cells(i + 1, tickerColumn).Value <> Cells(i, tickerColumn).Value Then
+                ' assign ticker name
+                tickerName = Cells(i, tickerColumn).Value
+                Cells(row, tickerSumColumn).Value = tickerName
+                ' assign Close Price
+                closePrice = Cells(i, closeColumn).Value
+                ' add Yearly Change
+                yearlyChange = closePrice - openPrice
+                Cells(row, yearlyChangeColumn).Value = yearlyChange
+                ' add Percent Change
+                If (openPrice = 0 And closePrice = 0) Then
+                    percentChange = 0
+                ElseIf (openPrice = 0 And closePrice <> 0) Then
+                    percentChange = 1
+                Else
+                    percentChange = yearlyChange / openPrice
+                    Cells(row, percChangeColumn).Value = percentChange
+                    Cells(row, percChangeColumn).NumberFormat = "0.00%"
+                End If
+                ' add Total Volumn
+                volume = volume + Cells(i, volColumn).Value
+                Cells(row, totalVolColumn).Value = volume
+                ' Add one to the summary table row
+                row = row + 1
+                ' reset the Open Price
+                openPrice = Cells(i + 1, openColumn)
+                ' reset the Volumn Total
+                volume = 0
+            'if cells are the same ticker
+            Else
+                volume = volume + Cells(i, volColumn).Value
+            End If
+        Next i
+        
+        ' find last row of yearly change
+        yearlyChangeLastRow = WS.Cells(Rows.Count, tickerSumColumn).End(xlUp).row
+        ' assign cell color
+        For j = 2 To yearlyChangeLastRow
+            If (Cells(j, yearlyChangeColumn).Value > 0 Or Cells(j, yearlyChangeColumn).Value = 0) Then
+                Cells(j, yearlyChangeColumn).Interior.ColorIndex = 10
+            ElseIf Cells(j, yearlyChangeColumn).Value < 0 Then
+                Cells(j, yearlyChangeColumn).Interior.ColorIndex = 3
+            End If
+        Next j
+        
+
+        ' Look through each rows to find the greatest value and its associate ticker
+        For k = 2 To yearlyChangeLastRow
+            If Cells(k, percChangeColumn).Value = Application.WorksheetFunction.Max(WS.Range("K2:K" & yearlyChangeLastRow)) Then
+                Cells(2, 16).Value = Cells(k, tickerSumColumn).Value
+                Cells(2, 17).Value = Cells(k, percChangeColumn).Value
+                Cells(2, 17).NumberFormat = "0.00%"
+            ElseIf Cells(k, percChangeColumn).Value = Application.WorksheetFunction.Min(WS.Range("K2:K" & yearlyChangeLastRow)) Then
+                Cells(3, 16).Value = Cells(k, tickerSumColumn).Value
+                Cells(3, 17).Value = Cells(k, percChangeColumn).Value
+                Cells(3, 17).NumberFormat = "0.00%"
+            ElseIf Cells(k, totalVolColumn).Value = Application.WorksheetFunction.Max(WS.Range("L2:L" & yearlyChangeLastRow)) Then
+                Cells(4, 16).Value = Cells(k, tickerSumColumn).Value
+                Cells(4, 17).Value = Cells(k, totalVolColumn).Value
+            End If
+        Next k
+        
+    Next WS
+        
+End Sub
+
+
